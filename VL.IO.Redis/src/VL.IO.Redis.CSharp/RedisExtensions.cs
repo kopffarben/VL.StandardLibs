@@ -45,6 +45,23 @@ namespace VL.IO.Redis
 
     public static class RedisExtensions
     {
+        //public static ImmutableDictionary<Guid, object> Result(this Task<Task<ImmutableDictionary<Guid, object>>> keyValuePairs)
+        //{
+        //    return keyValuePairs.ConfigureAwait(false).GetAwaiter().GetResult().ConfigureAwait(false).GetAwaiter().GetResult();
+        //}
+
+        //public static void GetDict(this Task<ValueTuple<ImmutableDictionary<Guid, object>, ImmutableList<RedisKey>>> tup, out ImmutableDictionary<Guid, object> Dict, out ImmutableList<RedisKey> Changes)
+        //{
+        //    var tuple = tup.ConfigureAwait(false).GetAwaiter().GetResult();
+
+        //    Dict = tuple.Item1;
+        //    Changes = tuple.Item2;
+        //}
+
+        //public static ValueTuple<ImmutableDictionary<Guid, object>, ImmutableList<RedisKey>> Wait(this Task<ValueTuple<ImmutableDictionary<Guid, object>, ImmutableList<RedisKey>>> tup)
+        //{
+        //    return tup.ConfigureAwait(false).GetAwaiter().GetResult();
+        //}
 
         public static Task<KeyValuePair<Guid, object>> Cast<T>(this Task<T> task, Guid guid)
         {
