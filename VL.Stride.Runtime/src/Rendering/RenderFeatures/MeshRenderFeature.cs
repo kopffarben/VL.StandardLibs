@@ -1,30 +1,77 @@
 ﻿// Copyright (c) .NET Foundation and Contributors (https://dotnetfoundation.org/ & https://stride3d.net) and Silicon Studio Corp. (https://www.siliconstudio.co.jp)
 // Distributed under the MIT license. See the LICENSE.md file in the project root for more information.
 
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Threading;
-
+using Stride.Core;
+using Stride.Core.Annotations;
+using Stride.Core.Collections;
 using Stride.Core.Mathematics;
+using Stride.Core.Threading;
 using Stride.Core.Diagnostics;
 using Stride.Graphics;
 using Stride.Rendering;
 using Buffer = Stride.Graphics.Buffer;
+using Stride.Engine;
+using System.Reflection;
 
-using VL.Stride.Graphics;
 
 namespace VL.Stride.Rendering
 {
+    static class SubRenderFeatureExt
+    {
+        static MethodInfo attachRootRenderFeature = typeof(global::Stride.Rendering.SubRenderFeature).GetMethod("AttachRootRenderFeature", BindingFlags.NonPublic | BindingFlags.Instance);
+        static object[] arg = new object[1];
+
+        public static void AttachRootRenderFeature(this SubRenderFeature subRenderFeature, RootRenderFeature rootRenderFeature)
+        {
+            if (subRenderFeature != null)
+            {
+                arg[0] = rootRenderFeature;
+                attachRootRenderFeature.Invoke(subRenderFeature, arg);
+            }
+        }
+    }
+
     /// <summary>
     /// Renders <see cref="RenderMesh"/>.
     /// </summary>
-    public class MeshRenderFeature : global::Stride.Rendering.MeshRenderFeature
+    public class MeshRenderFeature : RootEffectRenderFeature
     {
         private readonly ThreadLocal<DescriptorSet[]> descriptorSets = new ThreadLocal<DescriptorSet[]>();
-        private static readonly ProfilingKey DrawKey = new ProfilingKey("MeshRenderFeatureExt.Draw");
+
+        private static readonly ProfilingKey ExtractKey = new ProfilingKey("MeshRenderFeature.Extract");
+        private static readonly ProfilingKey PreparePermutationsImplKey = new ProfilingKey("MeshRenderFeature.PreparePermutationsImpl");
+        private static readonly ProfilingKey PrepareKey = new ProfilingKey("MeshRenderFeature.Prepare");
+        private static readonly ProfilingKey DrawKey = new ProfilingKey("MeshRenderFeature.Draw");
+
         private Buffer emptyBuffer;
 
+        /// <summary>
+        /// Lists of sub render features that can be applied on <see cref="RenderMesh"/>.
+        /// </summary>
+        [DataMember]
+        [Category]
+        [MemberCollection(CanReorderItems = true, NotNullItems = true)]
+        public TrackingCollection<SubRenderFeature> RenderFeatures = new TrackingCollection<SubRenderFeature>();
+
+        /// <inheritdoc/>
+        public override Type SupportedRenderObjectType => typeof(RenderMesh);
+
+        /// <inheritdoc/>
         protected override void InitializeCore()
         {
             base.InitializeCore();
+
+            RenderFeatures.CollectionChanged += RenderFeatures_CollectionChanged;
+
+            foreach (var renderFeature in RenderFeatures)
+            {
+                renderFeature.AttachRootRenderFeature(this);
+                renderFeature.Initialize(Context);
+            }
 
             // Create an empty buffer to compensate for missing vertex streams
             emptyBuffer = Buffer.Vertex.New(Context.GraphicsDevice, new Vector4[1]);
@@ -32,12 +79,98 @@ namespace VL.Stride.Rendering
 
         protected override void Destroy()
         {
+            foreach (var renderFeature in RenderFeatures)
+            {
+                renderFeature.Dispose();
+            }
+
+            RenderFeatures.CollectionChanged -= RenderFeatures_CollectionChanged;
+
             descriptorSets.Dispose();
 
             emptyBuffer?.Dispose();
             emptyBuffer = null;
 
             base.Destroy();
+        }
+
+        /// <inheritdoc/>
+        public override void Collect()
+        {
+            foreach (var renderFeature in RenderFeatures)
+            {
+                renderFeature.Collect();
+            }
+        }
+
+        /// <inheritdoc/>
+        public override void Extract()
+        {
+            using var _ = Profiler.Begin(ExtractKey);
+            foreach (var renderFeature in RenderFeatures)
+            {
+                renderFeature.Extract();
+            }
+        }
+
+        /// <inheritdoc/>
+        public override void PrepareEffectPermutationsImpl(RenderDrawContext context)
+        {
+            using var _ = Profiler.Begin(PreparePermutationsImplKey);
+            // Setup ActiveMeshDraw
+            Dispatcher.ForEach(RenderObjects, renderObject =>
+            {
+                var renderMesh = (RenderMesh)renderObject;
+
+                renderMesh.ActiveMeshDraw = renderMesh.Mesh.Draw;
+            });
+
+            base.PrepareEffectPermutationsImpl(context);
+
+            foreach (var renderFeature in RenderFeatures)
+            {
+                renderFeature.PrepareEffectPermutations(context);
+            }
+        }
+
+        /// <inheritdoc/>
+        public override void Prepare(RenderDrawContext context)
+        {
+            using (Profiler.Begin(PrepareKey))
+            {
+                base.Prepare(context);
+
+                // Prepare each sub render feature
+                foreach (var renderFeature in RenderFeatures)
+                {
+                    renderFeature.Prepare(context);
+                }
+            }
+        }
+
+        protected override void ProcessPipelineState(RenderContext context, RenderNodeReference renderNodeReference, ref RenderNode renderNode, RenderObject renderObject, PipelineStateDescription pipelineState)
+        {
+            var renderMesh = (RenderMesh)renderObject;
+            var drawData = renderMesh.ActiveMeshDraw;
+
+            pipelineState.InputElements = PrepareInputElements(pipelineState, drawData);
+            pipelineState.PrimitiveType = drawData.PrimitiveType;
+
+            // Prepare each sub render feature
+            foreach (var renderFeature in RenderFeatures)
+            {
+                renderFeature.ProcessPipelineState(context, renderNodeReference, ref renderNode, renderObject, pipelineState);
+            }
+        }
+
+        /// <inheritdoc/>
+        public override void Draw(RenderDrawContext context, RenderView renderView, RenderViewStage renderViewStage)
+        {
+            using var _ = Profiler.Begin(DrawKey);
+            foreach (var renderFeature in RenderFeatures)
+            {
+                renderFeature.Draw(context, renderView, renderViewStage);
+            }
         }
 
         /// <inheritdoc/>
@@ -122,24 +255,81 @@ namespace VL.Stride.Rendering
                 }
                 else
                 {
-                    if (drawData.IndexBuffer is IndirectIndexBufferBinding)
-                    {
-                        var indexbuffer = drawData.IndexBuffer as IndirectIndexBufferBinding;
-
-                        if (renderMesh.InstanceCount > 0)
-                            commandList.DrawIndexedInstanced(indexbuffer.DrawArgs);
-                        else
-                            commandList.DrawInstanced(indexbuffer.DrawArgs);
-                    }
+                    if (renderMesh.InstanceCount > 0)
+                        commandList.DrawIndexedInstanced(drawData.DrawCount, renderMesh.InstanceCount, drawData.StartLocation);
                     else
-                    {
-                        if (renderMesh.InstanceCount > 0)
-                            commandList.DrawIndexedInstanced(drawData.DrawCount, renderMesh.InstanceCount, drawData.StartLocation);
-                        else
-                            commandList.DrawIndexed(drawData.DrawCount, drawData.StartLocation);
-                    }
+                        commandList.DrawIndexed(drawData.DrawCount, drawData.StartLocation);
                 }
             }
+        }
+
+        /// <inheritdoc/>
+        public override void Flush(RenderDrawContext context)
+        {
+            base.Flush(context);
+
+            foreach (var renderFeature in RenderFeatures)
+            {
+                renderFeature.Flush(context);
+            }
+        }
+
+        private void RenderFeatures_CollectionChanged(object sender, TrackingCollectionChangedEventArgs e)
+        {
+            var renderFeature = (SubRenderFeature)e.Item;
+
+            switch (e.Action)
+            {
+                case System.Collections.Specialized.NotifyCollectionChangedAction.Add:
+                    renderFeature.AttachRootRenderFeature(this);
+                    renderFeature.Initialize(Context);
+                    break;
+                case System.Collections.Specialized.NotifyCollectionChangedAction.Remove:
+                    renderFeature.Dispose();
+                    break;
+            }
+        }
+
+        private InputElementDescription[] PrepareInputElements(PipelineStateDescription pipelineState, MeshDraw drawData)
+        {
+            // Get the input elements already contained in the mesh's vertex buffers
+            var availableInputElements = drawData.VertexBuffers.CreateInputElements();
+            var inputElements = new List<InputElementDescription>(availableInputElements);
+
+            // In addition, add input elements for all attributes that are not contained in a bound buffer, but required by the shader
+            foreach (var inputAttribute in pipelineState.EffectBytecode.Reflection.InputAttributes)
+            {
+                var inputElementIndex = FindElementBySemantic(availableInputElements, inputAttribute.SemanticName, inputAttribute.SemanticIndex);
+
+                // Provided by any vertex buffer?
+                if (inputElementIndex >= 0)
+                    continue;
+
+                inputElements.Add(new InputElementDescription
+                {
+                    AlignedByteOffset = 0,
+                    Format = PixelFormat.R32G32B32A32_Float,
+                    InputSlot = drawData.VertexBuffers.Length,
+                    InputSlotClass = InputClassification.Vertex,
+                    InstanceDataStepRate = 0,
+                    SemanticIndex = inputAttribute.SemanticIndex,
+                    SemanticName = inputAttribute.SemanticName,
+                });
+            }
+
+            return inputElements.ToArray();
+        }
+
+        private static int FindElementBySemantic(InputElementDescription[] inputElements, string semanticName, int semanticIndex)
+        {
+            int foundDescIndex = -1;
+            for (int index = 0; index < inputElements.Length; index++)
+            {
+                if (semanticName == inputElements[index].SemanticName && semanticIndex == inputElements[index].SemanticIndex)
+                    foundDescIndex = index;
+            }
+
+            return foundDescIndex;
         }
     }
 }
