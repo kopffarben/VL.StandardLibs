@@ -16,6 +16,7 @@ using Stride.Rendering;
 using Buffer = Stride.Graphics.Buffer;
 using Stride.Engine;
 using System.Reflection;
+using VL.Stride.Graphics;
 
 
 namespace VL.Stride.Rendering
@@ -255,10 +256,22 @@ namespace VL.Stride.Rendering
                 }
                 else
                 {
-                    if (renderMesh.InstanceCount > 0)
-                        commandList.DrawIndexedInstanced(drawData.DrawCount, renderMesh.InstanceCount, drawData.StartLocation);
+                    if (drawData.IndexBuffer is IndirectIndexBufferBinding)
+                    {
+                        var indexbuffer = drawData.IndexBuffer as IndirectIndexBufferBinding;
+
+                        if (renderMesh.InstanceCount > 0)
+                            commandList.DrawIndexedInstanced(indexbuffer.DrawArgs);
+                        else
+                            commandList.DrawInstanced(indexbuffer.DrawArgs);
+                    }
                     else
-                        commandList.DrawIndexed(drawData.DrawCount, drawData.StartLocation);
+                    {
+                        if (renderMesh.InstanceCount > 0)
+                            commandList.DrawIndexedInstanced(drawData.DrawCount, renderMesh.InstanceCount, drawData.StartLocation);
+                        else
+                            commandList.DrawIndexed(drawData.DrawCount, drawData.StartLocation);
+                    }
                 }
             }
         }
