@@ -11,6 +11,8 @@ using Buffer = Stride.Graphics.Buffer;
 using System.Reflection;
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using VL.Lib.Reactive;
 
 namespace VL.Stride.Rendering
 {
@@ -114,9 +116,8 @@ namespace VL.Stride.Rendering
                 commandList.SetDescriptorSets(0, descriptorSetsLocal);
 
                 // Draw
-                if (drawData is MeshDrawIndirect && ((MeshDrawIndirect)drawData).DrawArgs != null)
+                if (drawData is MeshDrawIndirect drawDataIndirect && drawDataIndirect.DrawArgs != null)
                 {
-                    var drawDataIndirect = (MeshDrawIndirect)drawData;
                     if (drawData.IndexBuffer == null)
                     {
                         if (drawData.VertexBuffers[0].Buffer.Flags == BufferFlags.StreamOutput)
@@ -161,13 +162,13 @@ namespace VL.Stride.Rendering
         static FieldInfo nativeDeviceContextFi;
         static FieldInfo nativeDeviceChildFi;
 
-        static MethodInfo PrepareDraw;
+        //static MethodInfo PrepareDraw;
         static object[] arg;
 
 
         static CommandListHelper()
         {
-            PrepareDraw = typeof(CommandList).GetMethod("PrepareDraw", BindingFlags.Instance | BindingFlags.NonPublic);
+            //PrepareDraw = typeof(CommandList).GetMethod("PrepareDraw", BindingFlags.Instance | BindingFlags.NonPublic);
             nativeDeviceContextFi = typeof(CommandList).GetRuntimeFields().Where(fi => fi.Name == "nativeDeviceContext").First();
 
             var graphicsResourceBaseType = Type.GetType("Stride.Graphics.GraphicsResourceBase, Stride.Graphics");
@@ -179,11 +180,28 @@ namespace VL.Stride.Rendering
             return (SharpDX.Direct3D11.DeviceContext)nativeDeviceContextFi.GetValue(commandList);
         }
 
+        public static void PrepareDraw(this CommandList commandList)
+        {
+            PrepareDraw(commandList);
+
+            [UnsafeAccessor(UnsafeAccessorKind.Method, Name = nameof(PrepareDraw))]
+            extern static void PrepareDraw(CommandList c);
+        }
+
+        //public static void NativeDeviceContext(this CommandList commandList)
+        //{
+        //    ref SharpDX.Direct3D11.DeviceContext f = ref NativeDeviceContext(commandList);
+
+        //    [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "NativeDeviceContext")]
+        //    extern static ref SharpDX.Direct3D11.DeviceContext NativeDeviceContext(CommandList commandList);
+        //}
+
         public static CommandList DrawInstanced(this CommandList commandList, Buffer argumentsBuffer, int alignedByteOffsetForArgs = 0)
         {
             if (argumentsBuffer == null) throw new ArgumentNullException("argumentsBuffer");
 
-            PrepareDraw.Invoke(commandList, arg);
+            commandList.PrepareDraw();
+            //PrepareDraw.Invoke(commandList, arg);
 
             var buffer = (SharpDX.Direct3D11.Buffer)nativeDeviceChildFi.GetValue(argumentsBuffer);
 
