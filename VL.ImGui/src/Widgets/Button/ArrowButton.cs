@@ -1,4 +1,5 @@
 ﻿using System.Reactive;
+using VL.Core.EditorAttributes;
 
 namespace VL.ImGui.Widgets
 {
@@ -8,13 +9,15 @@ namespace VL.ImGui.Widgets
     [GenerateNode(Category = "ImGui.Widgets", Button = true, Tags = "bang")]
     internal partial class ArrowButton : ChannelWidget<Unit>
     {
-        public ImGuiNET.ImGuiDir Direction { private get; set; }
+        public ImGuiNET.ImGuiDir Direction { private get; set; } = ImGuiNET.ImGuiDir.None;
 
         internal override void UpdateCore(Context context)
         {
             Update();
             if (ImGuiNET.ImGui.ArrowButton(widgetLabel.Update(label.Value), Direction))
                 Value = Unit.Default;
+
+            widgetLabel.DrawLabelInSameLine();
         }
     }
 }

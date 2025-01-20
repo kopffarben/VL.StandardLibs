@@ -53,15 +53,15 @@ namespace VL.ImGui.Widgets
                     ImGui.CloseCurrentPopup();
             }
 
-            if (positionChanged || visibilityChanged)
-            {
-                ImGui.SetNextWindowPos(position.FromHectoToImGui());
-            }
-
             if (visible)
             {
 
-                ContentIsVisible = ImGui.BeginPopup(label);
+                if (positionChanged)
+                {
+                    ImGui.SetNextWindowPos(position.FromHectoToImGui());
+                }
+
+                ContentIsVisible = ImGui.BeginPopup(label, Flags);
                 VisibleFlange.Value = ContentIsVisible;
 
                 if (ContentIsVisible)

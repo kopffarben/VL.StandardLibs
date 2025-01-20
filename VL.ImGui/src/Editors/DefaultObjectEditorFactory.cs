@@ -1,4 +1,5 @@
 ﻿using Stride.Core.Mathematics;
+using System.Reactive;
 using System.Reflection;
 using VL.Core;
 using VL.Core.EditorAttributes;
@@ -48,7 +49,7 @@ namespace VL.ImGui.Editors
             if (staticType.HasMonadicValueEditor())
                 return MonadicEditor.Create(channel, context);
 
-            if (staticType.IsConstructedGenericType)
+            if (staticType.IsConstructedGenericType && !context.PrimitiveOnly)
             {
                 if (staticType.GetGenericTypeDefinition() == typeof(Spread<>))
                     return Activator.CreateInstance(typeof(SpreadEditor<>).MakeGenericType(staticType.GenericTypeArguments), new object[] { channel, context }) as IObjectEditor;
@@ -75,6 +76,9 @@ namespace VL.ImGui.Editors
 
             if (type == typeof(string))
                 return WidgetType.Input;
+
+            if (type == typeof(Unit))
+                return WidgetType.Bang;
 
             return WidgetType.Default;
         }
