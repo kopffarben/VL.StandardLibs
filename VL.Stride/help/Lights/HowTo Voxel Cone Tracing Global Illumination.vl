@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="JpZ3EXx76GVMVcaWFcAY0g" LanguageVersion="2024.6.7-0211-g4c07a0803b" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="JpZ3EXx76GVMVcaWFcAY0g" LanguageVersion="2025.7.0-0018-gcc09023ca3" Version="0.128">
   <NugetDependency Id="Ekm2dZX7CKaPY1ExJMxiUS" Location="VL.CoreLib" Version="2024.6.7-0199-gdeb6aa1e6c" />
   <Patch Id="CdNv8NCToiFPCbi5xUtM5F">
     <Canvas Id="R4xLNfRcQtVOmzlY0YygQF" DefaultCategory="Main" CanvasType="FullCategory">
@@ -3056,7 +3056,7 @@
               <Choice Kind="ProcessAppFlag" Name="SceneWindow" />
             </p:NodeReference>
             <Pin Id="SLpJQ3Ps7dmLHrPxYDU1Bm" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Lwgir1aqmd1LKE8lZMZrRd" Name="Bounds" Kind="InputPin" DefaultValue="3398, 154.66667, 1690, 1114.6666" IsHidden="true" />
+            <Pin Id="Lwgir1aqmd1LKE8lZMZrRd" Name="Bounds" Kind="InputPin" DefaultValue="2850.6667, 136.66667, 1690, 1114.6666" IsHidden="true" />
             <Pin Id="DYz6krqK3WvNSnSWUE6xXu" Name="Bound to Document" Kind="InputPin" IsHidden="true" />
             <Pin Id="PvydV9h9hvgP3RXzY9diUq" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="F1WUPyJiVUhPYCDfqkgX36" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
@@ -3147,7 +3147,7 @@
             <Pin Id="LXtVDgboQu5LjzAchonjSc" Name="Entity" Kind="OutputPin" />
             <Pin Id="JLXntDk16J7LG9zc3qZ2bw" Name="Show Helper" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="-284,318,67,19" Id="OPpkp4L2HtHOYD6TGdosps">
+          <Node Bounds="127,763,67,19" Id="OPpkp4L2HtHOYD6TGdosps">
             <p:NodeReference LastCategoryFullName="Main" LastDependency="HowTo Voxel Cone Tracing Global Illumination.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessNode" Name="SomeScene" />
@@ -3534,7 +3534,7 @@
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="-270,388,69,19" Id="Vn1pNHOQXCoQdMF8v42ze3">
+          <Node Bounds="-82,773,69,19" Id="Vn1pNHOQXCoQdMF8v42ze3">
             <p:NodeReference LastCategoryFullName="Main" LastDependency="HowTo Voxel Cone Tracing Global Illumination.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="TorusScene" />
@@ -3542,11 +3542,6 @@
             <Pin Id="DBgWhj5kPTeQWXyuB0uP1q" Name="Output" Kind="OutputPin" />
             <Pin Id="TWqEnSxF4xcPCnCKbsXQTo" Name="Node Context" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="NchbbcfWYtAQVJjqYjOK38" Comment="Light Falloff" Bounds="995,-322,93,15" ShowValueBox="true" isIOBox="true" Value="Heuristic">
-            <p:TypeAnnotation>
-              <Choice Kind="TypeFlag" Name="LightFalloffs" />
-            </p:TypeAnnotation>
-          </Pad>
           <Pad Id="OWlSrYgCK3bO1iaUuA7bHe" Comment="Clip Resolution" Bounds="945,57,47,15" ShowValueBox="true" isIOBox="true" Value="x128">
             <p:TypeAnnotation>
               <Choice Kind="TypeFlag" Name="Resolutions" />
@@ -3636,7 +3631,7 @@
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="QILcuJgXqtVNEd75RpkWLB" Comment="Voxel Grid Snapping" Bounds="1063,252,35,35" ShowValueBox="true" isIOBox="true" Value="False">
+          <Pad Id="QILcuJgXqtVNEd75RpkWLB" Comment="Voxel Grid Snapping" Bounds="1067,264,35,35" ShowValueBox="true" isIOBox="true" Value="False">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="ImmutableTypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -3766,14 +3761,6 @@
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="-398,676,77,19" Id="RvkicNdZFojPYHzpKSK3TU">
-            <p:NodeReference LastCategoryFullName="Main" LastDependency="HowTo Voxel Cone Tracing Global Illumination.vl">
-              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <Choice Kind="ProcessAppFlag" Name="ParticlesGlow" />
-            </p:NodeReference>
-            <Pin Id="OUG7TipgK8MM39Kpb7Xm1C" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="M1t2hCf49ZYMLrt1RWOdld" Name="Entity" Kind="OutputPin" />
-          </Node>
           <Pad Id="VzryPYOE9DgMhSAScrCM2R" Comment="Intensity" Bounds="858,1422,35,15" ShowValueBox="true" isIOBox="true" Value="1">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
@@ -3964,6 +3951,20 @@
               <Choice Kind="TypeFlag" Name="Integer32" />
             </p:TypeAnnotation>
           </Pad>
+          <Pad Id="IUWcWGiHlhQLJisu4WSEsD" Comment="Light Falloff" Bounds="1020,-348,93,15" ShowValueBox="true" isIOBox="true" Value="Heuristic">
+            <p:TypeAnnotation>
+              <Choice Kind="TypeFlag" Name="LightFalloffs" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="-305,765,65,19" Id="H3eIMxm4LCePKbtOt7JP9T">
+            <p:NodeReference LastCategoryFullName="Main" LastDependency="HowTo Voxel Cone Tracing Global Illumination.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Main" />
+              <Choice Kind="ProcessAppFlag" Name="StageCube" />
+            </p:NodeReference>
+            <Pin Id="FHawnJRAWJMQag4ETZWnIm" Name="Output" Kind="OutputPin" />
+            <Pin Id="RzptkSg0ATNMQV6Z7OaujQ" Name="Node Context" Kind="InputPin" IsHidden="true" />
+          </Node>
         </Canvas>
         <Patch Id="JHxDU5Em49wPdexulnE308" Name="Create" />
         <Patch Id="VPL2JDBPkmMMzjnh2ok4Xt" Name="Update" ParticipatingElements="BQIZb4YOmaMMPVJHlLz27U" />
@@ -4008,7 +4009,6 @@
         <Link Id="DOuoTletiVPQXyR4HyaOHK" Ids="OQVuPVKqIoHOPOcV6h6crV,QAJKMQUbd7dMVxysgib6pG" />
         <Link Id="Q996JhKvlabPbOYF26uiAS" Ids="MGM5UDPmIqjPjxHkIBsoag,IU3o4QJTzOZQcws69Cp3zC" />
         <Link Id="E8vXC10buDUNOpN3OOrPbO" Ids="O0QvJqpC0ezMtBylN7cuWO,RUTXNMKrW3TPNdKDVPIOru" />
-        <Link Id="CR8YhVJtvkJPETuH13udP2" Ids="NchbbcfWYtAQVJjqYjOK38,IqpQPHez7E5MMO3p8Dgltn" />
         <Link Id="RP9grKp91JcMT80Kw7sDZt" Ids="OWlSrYgCK3bO1iaUuA7bHe,CAbDB3RriIwLrPeuEcjN66" />
         <Link Id="TK8VSPAN8r9Mh00molcr4N" Ids="VzzOsSjICzzLhHEJacnLjA,Du303BbHsGQLwH5oe0KIaX" />
         <Link Id="E5j45mVRDgzMfkZiuByU0g" Ids="OnuQKf4IBBgPfyui7w8gPw,UJkM1z60bUcNkKO59SIPUj" />
@@ -4062,6 +4062,7 @@
         <Link Id="HtuRez3vdNQMfqOBQDP5LB" Ids="LG8SozyRVsaL0p0ev4oIh7,R5vjr3QSZtuOzpPOKmQPdJ" />
         <Link Id="Je61nwQEwWMLEqWekJfjfJ" Ids="NR9K9FlGZZPLRHYqjI3tOr,S1PGS7lAgRyLAhchoROyWI" />
         <Link Id="MHs1QwILygXPRrXPLNCc22" Ids="RMVgYqo93prLxtpVRcEKTJ,A8SlGS5DIcqLjeHulGvBOA" />
+        <Link Id="C2PEP5mtCPLLe9t8hiL8UI" Ids="IUWcWGiHlhQLJisu4WSEsD,IqpQPHez7E5MMO3p8Dgltn" />
       </Patch>
     </Node>
   </Patch>
