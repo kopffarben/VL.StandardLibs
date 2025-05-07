@@ -21,14 +21,14 @@ namespace VL.Skia.Video
         private readonly VideoPlaybackContext ctx;
 
         private VideoStream? videoStream;
-        private IResourceProvider<SKImage>? current, latest;
+        private IResourceProvider<SKImage?>? current, latest;
 
         public VideoStreamToSKImage(NodeContext nodeContext)
         {
-            renderContext = RenderContext.ForCurrentThread();
+            renderContext = RenderContext.ForCurrentApp();
 
             var frameClock = AppHost.Current.Services.GetRequiredService<IFrameClock>();
-            if (renderContext.EglContext.Dislpay.TryGetD3D11Device(out var d3dDevice))
+            if (renderContext.EglContext.Display.TryGetD3D11Device(out var d3dDevice))
                 ctx = new VideoPlaybackContext(frameClock, nodeContext.GetLogger(), d3dDevice, GraphicsDeviceType.Direct3D11, renderContext.UseLinearColorspace);
             else
                 ctx = new VideoPlaybackContext(frameClock, nodeContext.GetLogger());
@@ -72,7 +72,7 @@ namespace VL.Skia.Video
             }
         }
 
-        public IResourceProvider<SKImage>? Provider
+        public IResourceProvider<SKImage?>? Provider
         {
             get
             {
@@ -94,7 +94,6 @@ namespace VL.Skia.Video
             latestSubscription.Dispose();
             currentSubscription.Dispose();
             imageStreamSubscription.Dispose();
-            renderContext.Dispose();
         }
     }
 }

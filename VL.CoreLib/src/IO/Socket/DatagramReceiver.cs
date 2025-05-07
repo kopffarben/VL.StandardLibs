@@ -5,17 +5,22 @@ using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
 using VL.Core;
+using VL.Core.Import;
 using VL.Lib.Basics.Resources;
 using VL.Lib.Collections;
+using VL.Lib.IO.Socket;
 using VL.Lib.Threading;
 using NetSocket = System.Net.Sockets.Socket;
 using NetUtils = VL.Lib.IO.Net.NetUtils;
+
+[assembly: ImportType(typeof(DatagramReceiver), Name = "Receiver (Datagram)", Category = "IO.Socket.Advanced")]
 
 namespace VL.Lib.IO.Socket
 {
     /// <summary>
     /// Receives datagrams from a local socket.
     /// </summary>
+    [ProcessNode]
     public class DatagramReceiver : IDisposable
     {
         readonly Subject<Datagram> FOutput = new Subject<Datagram>();
@@ -85,8 +90,9 @@ namespace VL.Lib.IO.Socket
                         }
                         catch (Exception)
                         {
-                            // Try again
-                            await Task.Delay(100);
+                            if (!token.IsCancellationRequested)
+                                // Try again
+                                await Task.Delay(100);
                             continue;
                         }
                     }

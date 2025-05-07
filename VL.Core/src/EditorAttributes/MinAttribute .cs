@@ -10,14 +10,19 @@ namespace VL.Core.EditorAttributes
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public class MinAttribute : Attribute
     {
-        public MinAttribute(object value)
+        public MinAttribute(string encodedValue)
         {
-            EncodedValue = AttributeHelpers.EncodeValueForAttribute(value);
+            EncodedValue = encodedValue;
+        }
+
+        public MinAttribute(float value)
+        {
+            EncodedValue = AttributeHelpers.EncodeValueForAttribute(value).Value;
         }
 
         public string EncodedValue { get; }
 
-        public T GetValue<T>() => AttributeHelpers.DecodeValueFromAttribute<T>(EncodedValue);
+        public T GetValue<T>() => AttributeHelpers.DecodeValueFromAttribute<T>(EncodedValue).Value;
 
         public override string ToString()
         {

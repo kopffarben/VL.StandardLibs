@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace VL.Core.EditorAttributes
 {
@@ -14,14 +10,19 @@ namespace VL.Core.EditorAttributes
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public class MaxAttribute : Attribute
     {
-        public MaxAttribute(object value)
+        public MaxAttribute(string encodedValue)
         {
-            EncodedValue = AttributeHelpers.EncodeValueForAttribute(value);
+            EncodedValue = encodedValue;
+        }
+
+        public MaxAttribute(float value)
+        {
+            EncodedValue = AttributeHelpers.EncodeValueForAttribute(value).Value;
         }
 
         public string EncodedValue { get; }
 
-        public T GetValue<T>() => AttributeHelpers.DecodeValueFromAttribute<T>(EncodedValue);
+        public T GetValue<T>() => AttributeHelpers.DecodeValueFromAttribute<T>(EncodedValue).Value;
 
         public override string ToString()
         {

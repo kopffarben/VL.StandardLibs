@@ -4,6 +4,7 @@ using VL.Lib.IO;
 using VL.Lib.IO.Notifications;
 using Stride.Core.Mathematics;
 using VL.Lib.Basics.Resources;
+using VL.Core;
 using System.Threading;
 
 namespace VL.Skia
@@ -11,18 +12,17 @@ namespace VL.Skia
     public sealed class OffScreenRenderer : IDisposable
     {
         private readonly RenderContext renderContext;
-        private readonly Thread renderThread;
+        private readonly IDisposable appHostSubscription;
 
         private readonly Producing<SKImage> output = new Producing<SKImage>();
         private Int2 size;
         private SKSurface surface;
         private Int2 surfaceSize;
-        private SKCanvas canvas;
 
         public OffScreenRenderer()
         {
-            renderContext = RenderContext.ForCurrentThread();
-            renderThread = Thread.CurrentThread;
+            renderContext = RenderContext.ForCurrentApp();
+            appHostSubscription = renderContext.OnDispose.Subscribe(_ => ReleaseGraphicsResources());
         }
 
         public ILayer Layer { get; set; }
@@ -86,11 +86,8 @@ namespace VL.Skia
 
         SKImage Render()
         {
-            if (Thread.CurrentThread != renderThread)
-                throw new InvalidOperationException("Render must be called on the same thread as where the renderer has been created in.");
-
             // Make our render context the current one
-            renderContext.MakeCurrent();
+            using var _ = renderContext.MakeCurrent(forRendering: true);
 
             // Release the previously rendered image. If no other consumers are present this will allow us to re-use the backing texture for this render pass.
             output.Resource = null;
@@ -103,37 +100,43 @@ namespace VL.Skia
                 surface?.Dispose();
                 var info = new SKImageInfo(size.X, size.Y, SKImageInfo.PlatformColorType, SKAlphaType.Premul);
                 surface = SKSurface.Create(renderContext.SkiaContext, budgeted: false, info, sampleCount: 0, origin: GRSurfaceOrigin.TopLeft, null, shouldCreateWithMips: true);
-                canvas = surface.Canvas;
             }
 
+
             // Render
+            var canvas = surface.Canvas;
             using (new SKAutoCanvasRestore(canvas, true))
             {
                 Layer?.Render(CallerInfo.InRenderer(size.X, size.Y, canvas, renderContext.SkiaContext));
             }
-            canvas.Flush();
+            surface.Flush();
 
             // Ref count the rendered image. As far as we're concerned it shall be valid until the next frame.
             // So if no one was interested in it, it will be disposed and the backing texture will go back into the texture pool.
-            var image = output.Resource = surface.Snapshot();
-
-            // Further make the image dependent on our render context - Skia doesn't track that dependency.
-            renderContext.AddRef();
-            image.AfterDispose(() => renderContext.Release());
-
-            return image;
+            return output.Resource = surface.Snapshot();
         }
 
         public void Dispose()
         {
-            renderContext.MakeCurrent();
-
+            appHostSubscription.Dispose();
             FMouseSubscription?.Dispose();
             FKeyboardSubscription?.Dispose();
-            output.Dispose();
-            surface.Dispose();
 
-            renderContext.Release();
+            if (!renderContext.IsDisposed)
+            {
+                using var _ = renderContext.MakeCurrent(forRendering: false);
+                ReleaseGraphicsResources();
+            }
+
+            output.Dispose();
+        }
+
+        private void ReleaseGraphicsResources()
+        {
+            output.Resource = null;
+
+            var surface = Interlocked.Exchange(ref this.surface, null);
+            surface?.Dispose();
         }
     }
 }

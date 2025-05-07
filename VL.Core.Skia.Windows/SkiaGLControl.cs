@@ -5,11 +5,13 @@ using System.Windows.Forms;
 using SkiaSharp;
 using VL.Skia.Egl;
 using Stride.Core.Mathematics;
+using VL.Core;
 
 namespace VL.Skia
 {
     public class SkiaGLControl : SkiaControlBase
     {
+        private readonly AppHost appHost;
         private RenderContext? renderContext;
         private EglSurface? eglSurface;
         private SKSurface? surface;
@@ -17,8 +19,9 @@ namespace VL.Skia
         private SKCanvas? canvas;
         private bool? lastSetVSync;
 
-        public SkiaGLControl()
+        public SkiaGLControl(AppHost appHost)
         {
+            this.appHost = appHost;
             SetStyle(ControlStyles.Opaque, true);
             SetStyle(ControlStyles.UserPaint, true);
             SetStyle(ControlStyles.AllPaintingInWmPaint, true);
@@ -28,12 +31,8 @@ namespace VL.Skia
 
         protected override void OnHandleCreated(EventArgs e)
         {
-            DestroySurface();
-
-            renderContext?.Dispose();
-
             // Retrieve the render context. Doing so in the constructor can lead to crashes when running unit tests with headless machines.
-            renderContext = RenderContext.ForCurrentThread();
+            renderContext = RenderContext.ForApp(appHost);
 
             lastSetVSync = default;
 
@@ -45,9 +44,6 @@ namespace VL.Skia
             base.OnHandleDestroyed(e);
 
             DestroySurface();
-
-            renderContext?.Dispose();
-            renderContext = null;
         }
 
         protected override sealed void OnPaintCore(PaintEventArgs e)
@@ -61,6 +57,8 @@ namespace VL.Skia
             // Create offscreen surface to render into
             if (eglSurface is null || surfaceSize.X != Width || surfaceSize.Y != Height)
             {
+                using var _1 = eglContext.MakeCurrent(forRendering: false);
+
                 DestroySurface();
 
                 surfaceSize = new Int2(Width, Height);
@@ -72,7 +70,7 @@ namespace VL.Skia
             if (eglSurface is null)
                 return;
 
-            eglContext.MakeCurrent(eglSurface);
+            using var _ = renderContext.MakeCurrent(forRendering: true, eglSurface);
 
             if (surface is null)
             {
@@ -124,19 +122,15 @@ namespace VL.Skia
 
         private void DestroySurface()
         {
-            var eglContext = renderContext?.EglContext;
-            if (eglContext is null)
+            if (renderContext is null)
                 return;
 
-            eglContext.MakeCurrent(eglSurface);
-
+            using var _ = renderContext.MakeCurrent(forRendering: false);
             surface?.Dispose();
             surface = null;
 
             eglSurface?.Dispose();
             eglSurface = default;
-
-            eglContext.MakeCurrent(null);
         }
     }
 }
