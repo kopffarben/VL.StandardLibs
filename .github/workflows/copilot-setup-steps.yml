@@ -9,7 +9,7 @@ concurrency:
 
 jobs:
   copilot-setup-steps:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 50
     permissions:
       contents: read
@@ -63,4 +63,4 @@ jobs:
         if: always()
         run: |
           echo "Warm-up workflow completed."
-          echo "Date: $(Get-Date -Format o)"
+          echo "Date: $(date -Iseconds)"
