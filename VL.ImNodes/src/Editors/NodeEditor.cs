@@ -18,7 +18,7 @@ namespace VL.ImNodes.Editors
         
         public bool Enabled { get; set; } = true;
 
-        internal override void UpdateCore(VL.ImGui.Context context)
+        internal override void UpdateCore(Context context)
         {
             if (!Enabled)
                 return;

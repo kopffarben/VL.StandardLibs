@@ -1,7 +1,6 @@
 using imnodesNET;
 using System.Numerics;
 using VL.ImGui;
-using Context = VL.ImGui.Context;
 
 namespace VL.ImNodes.Widgets
 {
