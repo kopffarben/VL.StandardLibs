@@ -1,0 +1,109 @@
+name: Copilot Setup Steps
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  copilot-setup-steps:
+    # Der Copilot Coding Agent erwartet exakt diesen Jobnamen.
+    runs-on: windows-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
+      APP_ENV: "CI"
+      # Eigene Feature Flags oder Konfigurationsschalter:
+      # VL_NATIVE_MODE: "enabled"
+      # SKIA_SHARP_MODE: "default"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      # .NET 8 reicht laut deinen Angaben. Falls du später mehrere TFMs pflegst, kannst du 9.0 ergänzen.
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+          cache: true
+          # Wenn du Lockfiles verwendest, kannst du gezielt:
+          # cache-dependency-path: |
+          #   **/packages.lock.json
+
+      # Optionaler zusätzlicher NuGet Cache (ergänzend – kann entfernt werden,
+      # wenn das eingebaute setup-dotnet Caching genügt).
+      - name: Cache NuGet packages (optional)
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\NuGet\Cache
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      # (Optional) Falls du native Tools brauchst (CMake, Ninja, etc.)
+      # Aktiviere durch Setzen von if auf true oder entferne den Block.
+      - name: Install Native Tooling (optional)
+        if: ${{ false }}
+        run: |
+          choco install cmake --installargs '"ADD_CMAKE_TO_PATH=System"' -y
+          choco install ninja -y
+        shell: powershell
+
+      # (Optional) Git LFS – nur aktivieren falls du LFS Assets hast.
+      - name: Git LFS (optional)
+        if: ${{ false }}
+        shell: bash
+        run: |
+          git lfs install
+          git lfs pull
+
+      # Restore (mit Solution – passe Namen an falls abweichend)
+      - name: Restore
+        run: dotnet restore VL.StandardLibs.sln --nologo
+
+      # Optional: Lockfiles erzwingen, falls noch nicht committed (nur einmal nötig)
+      - name: Generate lock files (optional, einmalig)
+        if: ${{ false }}
+        run: dotnet restore VL.StandardLibs.sln --use-lock-file --force-evaluate
+
+      # Warm-Build Release (beschleunigt spätere Agent-Aktionen)
+      - name: Warm Build (Release)
+        run: dotnet build VL.StandardLibs.sln -c Release --no-restore --nologo /m
+
+      # (Optional) Wenn Debug relevante Symbole später häufig gebraucht werden
+      - name: Warm Build (Debug) (optional)
+        if: ${{ false }}
+        run: dotnet build VL.StandardLibs.sln -c Debug --no-restore --nologo /m
+
+      # Warm-Testlauf – passe Filter an oder entferne ihn komplett
+      - name: Warm Test Run (fast subset)
+        run: |
+          dotnet test VL.StandardLibs.sln -c Release --no-build --logger "trx;LogFileName=warm.trx" --filter "TestCategory!=Slow"
+
+      # Beispiel für das Exportieren weiterer Env Variablen
+      - name: Export additional env
+        shell: bash
+        run: |
+          echo "GEOMETRY_OPT_LEVEL=avx2" >> $GITHUB_ENV
+          echo "SIMD_VECTOR_SIZE=256" >> $GITHUB_ENV
+          echo "INTEROP_STRICT_MODE=1" >> $GITHUB_ENV
+
+      # (Optional) Artefakte hochladen – normalerweise nicht nötig für den Copilot Agent
+      - name: Upload prebuilt artifacts (optional)
+        if: ${{ false }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: prebuilt-release
+          path: |
+            **/bin/Release/
+            !**/*.pdb
