@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <OutputPath>..\lib</OutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+
+    <VLPackageBasePath>..\</VLPackageBasePath>
+    <Description>ImNodes integration library for vvvv - node editor functionality using Dear ImGui</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ImGui.NET" GeneratePathProperty="true">
+      <PrivateAssets>all</PrivateAssets>
+      <ExcludeAssets>native;build;buildTransitive</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="ImNodes.NET" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\VL.CoreLib\src\VL.CoreLib.csproj" />
+    <ProjectReference Include="..\..\VL.ImGui\src\VL.ImGui.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup Condition=" '$(DebugGenerator)'  == 'true' ">
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Exclude the output of source generators from the compilation -->
+    <Compile Remove="Generated\**\*.cs" />
+    <None Include="Generated\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(PkgImGui_NET)\lib\net6.0\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Pack>true</Pack>
+      <PackagePath>lib\net8.0\%(RecursiveDir)%(Filename)%(Extension)</PackagePath>
+      <Visible>false</Visible>
+    </None>
+    
+    <None Include="$(PkgImNodes_NET)\lib\net6.0\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Pack>true</Pack>
+      <PackagePath>lib\net8.0\%(RecursiveDir)%(Filename)%(Extension)</PackagePath>
+      <Visible>false</Visible>
+    </None>
+  </ItemGroup>
+  
+</Project>
