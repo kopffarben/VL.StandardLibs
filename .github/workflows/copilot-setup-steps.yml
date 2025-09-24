@@ -1,66 +1,35 @@
 name: Copilot Setup Steps
 
 on:
-  workflow_dispatch:
-
-concurrency:
-  group: copilot-setup-${{ github.ref }}
-  cancel-in-progress: true
+  push:
+    branches: [ main ]
 
 jobs:
   copilot-setup-steps:
     runs-on: windows-latest
-    timeout-minutes: 50
-    permissions:
-      contents: read
-    env:
-      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
-      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
-      DOTNET_NOLOGO: "true"
-      CI: "true"
-      APP_ENV: "CI"
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    timeout-minutes: 30
 
-      - name: Setup .NET SDK (8.x)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
-          cache: true
+          dotnet-version: |
+            8.0.x
+          cache: true                # NuGet-Caching aktivieren
           cache-dependency-path: |
             Directory.Packages.props
             **/*.csproj
-            **/*.sln
+            **/*.fsproj
+            **/global.json
 
-      - name: .NET Info
-        run: dotnet --info
 
       - name: Restore
-        run: dotnet restore VL.StandardLibs.sln --nologo
+        run: dotnet restore
 
-      - name: Build Debug
-        run: dotnet build VL.StandardLibs.sln -c Debug --no-restore --nologo /m
-
-      - name: Build Release
-        run: dotnet build VL.StandardLibs.sln -c Release --no-restore --nologo /m
-
-      - name: Test (Release, fast tests only)
-        run: dotnet test VL.StandardLibs.sln -c Release --no-build --logger "trx;LogFileName=warm.trx" --filter "TestCategory!=Slow"
-
-      - name: Collect Test Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: '**/warm.trx'
-          if-no-files-found: ignore
-          retention-days: 7
-
-      - name: Summary
-        if: always()
+      - name: Verify SDK/Runtime
         run: |
-          echo "Warm-up workflow completed."
-          echo "Date: $(Get-Date -Format o)"
+          dotnet --info
+          dotnet --list-sdks
+          dotnet --list-runtimes
